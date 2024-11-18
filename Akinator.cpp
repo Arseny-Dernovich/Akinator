@@ -1,170 +1,242 @@
-#include  "My_features.h"
+#include "TXLib.h"
+#include "My_features.h"
 
 struct Tree_Node {
     char data[256];
-    struct Tree_Node* left;
-    struct Tree_Node* right;
-    struct Tree_Node* parent;
+    Tree_Node* left;
+    Tree_Node* right;
+    Tree_Node* parent;
 };
 
-Tree_Node* Build_Tree (FILE *file, Tree_Node *parent);
-Tree_Node* findNode (Tree_Node *node, const char *name);
-Tree_Node* findCommonAncestor (Tree_Node *node1, Tree_Node *node2);
-void Play_Akinator (Tree_Node *root);
-void compareObjects (Tree_Node *root);
-void displayTree (Tree_Node *node, int level);
-void DisplayTreeWithGraphviz(Tree_Node *root);
-void freeTree (Tree_Node *node);
-Tree_Node* CreateNode(const char* data, Tree_Node* parent);
-void SkipSpaces(FILE* file);
-int ReadData(FILE* file, char* buffer, int bufferSize);
+Tree_Node* Build_Tree(FILE* file, Tree_Node* parent);
+Tree_Node* FindNode(Tree_Node* node, const char* name);
+Tree_Node* FindCommonAncestor(Tree_Node* node1, Tree_Node* node2);
+void Play_Akinator(Tree_Node* root);
+void Define_Object(Tree_Node* root);
+void Compare_Objects(Tree_Node* root);
+void Display_Tree_With_Graphviz(Tree_Node* root);
+void Free_Tree(Tree_Node* node);
+Tree_Node* Create_Node(const char* data, Tree_Node* parent);
+void Skip_Spaces(FILE* file);
+int Read_Data(FILE* file, char* buffer, int bufferSize);
 
+//
+// // Графическое меню
+// void DrawMenu() {
+//     txSetFillColor(TX_WHITE);
+//     txClear();
+//     txSetColor(TX_BLACK);
+//     txSetFillColor(TX_LIGHTBLUE);
+//
+//     const int buttonWidth = 200;
+//     const int buttonHeight = 50;
+//     const int startX = 100;
+//     const int startY = 100;
+//     const int spacing = 20;
+//
+//     const char* buttonLabels[] = {
+//         "Отгадать",
+//         "Сравнить объекты",
+//         "Показать дерево",
+//         "Определение объекта",
+//         "Выход"
+//     };
+//
+//     for (int i = 0; i < 5; i++) {
+//         int x = startX;
+//         int y = startY + i * (buttonHeight + spacing);
+//         txRectangle(x, y, x + buttonWidth, y + buttonHeight);
+//         txDrawText(x, y, x + buttonWidth, y + buttonHeight, buttonLabels[i], DT_CENTER | DT_VCENTER | DT_SINGLELINE);
+//     }
+// }
+//
+// // Определение, на какую кнопку нажали
+// int GetButtonClick() {
+//     const int buttonWidth = 200;
+//     const int buttonHeight = 50;
+//     const int startX = 100;
+//     const int startY = 100;
+//     const int spacing = 20;
+//
+//     if (txMouseButtons() & 1) {
+//         for (int i = 0; i < 5; i++) {
+//             int x = startX;
+//             int y = startY + i * (buttonHeight + spacing);
+//             if (txMouseX() > x && txMouseX() < x + buttonWidth &&
+//                 txMouseY() > y && txMouseY() < y + buttonHeight) {
+//                 return i + 1;
+//             }
+//         }
+//     }
+//     return 0; // Нажатий нет
+// }
 
-int main ()
+int main()
 {
-    FILE *file = fopen ("akinator.txt", "r");
+    FILE *file = fopen("akinator.txt", "r");
+    if (!file)
+    {
+        printf("Не удалось открыть файл 'akinator.txt'.\n");
+        return 1;
+    }
 
-    Tree_Node* root = Build_Tree (file , NULL);
-    fclose (file);
+    Tree_Node *root = Build_Tree(file, NULL);
+    fclose(file);
 
     int choice = 0;
-    while (1) {
+    while (1)
+    {
+        printf("Выберите действие:\n");
+        printf("1) Отгадать\n");
+        printf("2) Сравнить объекты\n");
+        printf("3) Показать дерево\n");
+        printf("4) Определение объекта\n");
+        printf("5) Выход\n");
+        printf("Ваш выбор: ");
+        scanf("%d", &choice);
 
-        printf ("Р’С‹Р±РµСЂРёС‚Рµ РґРµР№СЃС‚РІРёРµ:\n");
-        printf ("1) РћС‚РіР°РґР°С‚СЊ\n");
-        printf ("2) РЎСЂР°РІРЅРёС‚СЊ РѕР±СЉРµРєС‚С‹\n");
-        printf ("3) РџРѕРєР°Р·Р°С‚СЊ РґРµСЂРµРІРѕ\n");
-        printf ("4) Р’С‹С…РѕРґ\n");
-        printf ("Р’Р°С€ РІС‹Р±РѕСЂ: ");
-        scanf ("%d", &choice);
+        switch (choice)
+        {
+        case 1:
+            Play_Akinator(root);
+            break;
 
-        switch (choice) {
+        case 2:
+            Compare_Objects(root);
+            break;
 
-            case 1:
-                Play_Akinator (root);
-                break;
+        case 3:
+            Display_Tree_With_Graphviz(root);
+            break;
 
-            case 2:
-                compareObjects (root);
-                break;
+        case 4:
+            Define_Object(root);
+            break;
 
-            case 3:
-                DisplayTreeWithGraphviz (root);
-                break;
+        case 5:
+            Free_Tree(root);
+            printf("Выход из программы.\n");
+            return 0;
 
-            case 4:
-                freeTree (root);
-                printf ("Р’С‹С…РѕРґ РёР· РїСЂРѕРіСЂР°РјРјС‹.\n");
-                return 0;
-
-            default:
-                printf ("РќРµРєРѕСЂСЂРµРєС‚РЅС‹Р№ РІРІРѕРґ. РџРѕРїСЂРѕР±СѓР№С‚Рµ СЃРЅРѕРІР°.\n");
+        default:
+            printf("Некорректный ввод. Попробуйте снова.\n");
         }
     }
 }
 
-
-
 Tree_Node* Build_Tree (FILE* file, Tree_Node* parent)
 {
-    SkipSpaces(file);
+    Skip_Spaces (file);
 
-    int ch = fgetc(file);
+    int ch = fgetc (file);
     if (ch != '{') {
-        ungetc(ch, file);
+        ungetc (ch, file);
         return NULL;
     }
 
     char buffer[256] = "";
-    if (!ReadData(file, buffer, sizeof(buffer))) {
+    if (!Read_Data (file, buffer, sizeof (buffer))) {
         return NULL;
     }
 
-    Tree_Node* node = CreateNode (buffer, parent);
+    Tree_Node* node = Create_Node (buffer, parent);
 
-    node->left = Build_Tree(file, node);
+    node->left = Build_Tree (file, node);
 
-    node->right = Build_Tree(file, node);
+    node->right = Build_Tree (file, node);
 
-    SkipSpaces(file);
-    fgetc(file);
+    Skip_Spaces (file);
+    fgetc (file);
 
     return node;
 }
 
-Tree_Node* CreateNode(const char* data, Tree_Node* parent)
+
+Tree_Node* Create_Node (const char* data, Tree_Node* parent)
 {
-    Tree_Node* node = (Tree_Node*) calloc(1, sizeof(Tree_Node));
+    Tree_Node* node = (Tree_Node*) calloc (1, sizeof (Tree_Node));
     if (node) {
-        strncpy(node->data, data, sizeof(node->data) - 1);
+        strncpy (node->data, data, sizeof (node->data) - 1);
         node->parent = parent;
     }
     return node;
 }
 
-void SkipSpaces(FILE* file)
+
+void Skip_Spaces (FILE* file)
 {
     int ch = 0;
-    while ((ch = fgetc(file)) != EOF) {
-        if (!isspace(ch)) {
-            ungetc(ch, file);
+    while ( (ch = fgetc (file)) != EOF) {
+
+        if (!isspace (ch)) {
+            ungetc (ch, file);
             break;
         }
     }
 }
 
-int ReadData(FILE* file, char* buffer, int bufferSize)
+
+int Read_Data (FILE* file, char* buffer, int bufferSize)
 {
-    SkipSpaces(file);
+    Skip_Spaces (file);
 
     int ch, i = 0;
-    while ((ch = fgetc(file)) != EOF && ch != '{' && ch != '}') {
+    while ( (ch = fgetc (file)) != EOF && ch != '{' && ch != '}') {
+
         if (i < bufferSize - 1) {
             buffer[i++] = (char) ch;
         }
     }
+
     buffer[i] = '\0';
 
     if (ch == '{' || ch == '}') {
-        ungetc(ch, file);
+
+        ungetc (ch, file);
     }
 
-    return i > 0;
+    return i;
 }
 
 
 void Play_Akinator (Tree_Node *node)
 {
     while (node->left && node->right) {
-        printf ("Р­С‚Рѕ %s? (РґР°/РЅРµС‚): ", node->data);
+
+        printf ("Это %s? (да/нет): ", node->data);
         char answer[10] = "";
         scanf ("%s", answer);
 
-        if (stricmp (answer, "РґР°") == 0) {
+        if (stricmp (answer, "да") == 0) {
+
             node = node->left;
-        } else if (stricmp (answer, "РЅРµС‚") == 0) {
+
+        } else if (stricmp (answer, "нет") == 0) {
+
             node = node->right;
+
         } else {
-            printf ("РќРµРєРѕСЂСЂРµРєС‚РЅС‹Р№ РѕС‚РІРµС‚. Р’РІРµРґРёС‚Рµ 'РґР°' РёР»Рё 'РЅРµС‚'.\n");
+
+            printf ("Некорректный ответ. Введите 'да' или 'нет'.\n");
         }
     }
 
-    printf ("Р’Р°С€ РѕР±СЉРµРєС‚: %s? (РґР°/РЅРµС‚): ", node->data);
+    printf ("Ваш объект: %s? (да/нет): ", node->data);
     char answer[10] = "";
     scanf ("%s", answer);
 
-    if (stricmp (answer, "РґР°") == 0) {
+    if (stricmp (answer, "да") == 0) {
 
-        printf ("РЈРіР°РґР°Р»!\n");
+        printf ("Угадал!\n");
 
-    } else if (stricmp (answer, "РЅРµС‚") == 0) {
+    } else if (stricmp (answer, "нет") == 0) {
 
         char newObject[256] = "";
-        printf ("РљР°РєРѕР№ РѕР±СЉРµРєС‚ РІС‹ РёРјРµР»Рё РІ РІРёРґСѓ? ");
+        printf ("Какой объект вы имели в виду? ");
         scanf ("%s", newObject);
 
         char question[256] = "";
-        printf ("Р§С‚Рѕ РјРѕР¶РЅРѕ СЃРїСЂРѕСЃРёС‚СЊ, С‡С‚РѕР±С‹ РѕС‚Р»РёС‡РёС‚СЊ %s РѕС‚ %s? ", newObject, node->data);
+        printf ("Что можно спросить, чтобы отличить %s от %s? ", newObject, node->data);
         scanf (" %[^\n]", question);
 
         Tree_Node *newNode = (Tree_Node*) calloc (1, sizeof (Tree_Node));
@@ -172,7 +244,7 @@ void Play_Akinator (Tree_Node *node)
 
         Tree_Node *oldNode = node;
 
-        Tree_Node *questionNode = (Tree_Node*) calloc(1, sizeof (Tree_Node));
+        Tree_Node *questionNode = (Tree_Node*) calloc (1, sizeof (Tree_Node));
         strcpy (questionNode->data, question);
 
         questionNode->left = newNode;
@@ -191,39 +263,121 @@ void Play_Akinator (Tree_Node *node)
             }
         }
 
-        // free (oldNode);
         node = questionNode;
 
-        printf("Р‘Р°Р·Р° РґР°РЅРЅС‹С… РѕР±РЅРѕРІР»РµРЅР°.\n");
     } else {
-        printf("РќРµРєРѕСЂСЂРµРєС‚РЅС‹Р№ РѕС‚РІРµС‚. РџРѕРїСЂРѕР±СѓР№С‚Рµ СЃРЅРѕРІР°.\n");
+
+        printf ("Некорректный ответ. Попробуйте снова.\n");
     }
 }
 
 
-Tree_Node* findNode (Tree_Node *node, const char *name)
+Tree_Node* FindNode(Tree_Node* node, const char* name)
 {
-    if (!node)
+    if (!node) {
         return NULL;
+    }
 
-    if (stricmp (node->data, name) == 0) return node;
+    printf("Проверяется узел: %s\n", node->data);
 
-    Tree_Node *foundNode = findNode (node->left, name);
-    if (foundNode)
+    if (strcmp(node->data, name) == 0) {
+
+        printf("Найден узел: %s\n", node->data);
+        return node;
+    }
+
+    Tree_Node* foundNode = FindNode(node->left, name);
+
+    if (foundNode) {
+
         return foundNode;
+    }
 
-    return findNode (node->right, name);
+    return FindNode(node->right, name);
 }
 
-Tree_Node* findCommonAncestor (Tree_Node *node1, Tree_Node *node2)
+
+void RemoveNewline (char* str)
+{
+    char* newline = strchr(str, '\n');
+    if (newline) {
+        *newline = '\0';
+    }
+}
+
+
+void GetObjectDefinition (Tree_Node* node, const char* name)
+{
+    if (!node) {
+        printf("Объект не найден в дереве.\n");
+        return;
+    }
+
+    Tree_Node* Name_Node = FindNode(node, name);
+    if (!Name_Node) {
+        printf("Объект '%s' не найден в дереве.\n", name);
+        return;
+    }
+
+    Tree_Node* path[256] = {};
+    int pathSize = 0;
+    node = Name_Node->parent;
+    while (node) {
+
+        path[pathSize++] = node;
+        node = node->parent;
+    }
+
+    printf("Определение объекта: ");
+    printf ("Это -");
+    for (int i = pathSize - 1; i >= 0; i--) {
+
+        RemoveNewline (path[i]->data);
+        printf("%s, ", path[i]->data);
+
+
+        if (i > 0) {
+
+            if (path[i - 1] == path[i]->left) {
+
+                printf("");
+
+            } else if (path[i - 1] == path[i]->right) {
+
+                printf("не ");
+            }
+        }
+    }
+    printf ("\n");
+
+}
+
+
+
+void Define_Object (Tree_Node* root)
+{
+    char objectName[256] = "";
+    printf ("Введите имя объекта для определения: ");
+    scanf ("%s", objectName);
+
+    Tree_Node* node = FindNode (root, objectName);
+    printf ("%s " , node->data);
+    GetObjectDefinition (node , objectName);
+}
+
+
+Tree_Node* FindCommonAncestor (Tree_Node *node1, Tree_Node *node2)
 {
     Tree_Node *ancestor1 = node1;
     while (ancestor1) {
+
         Tree_Node *ancestor2 = node2;
         while (ancestor2) {
             if (ancestor1 == ancestor2) {
+
                 return ancestor1;
             }
+
             ancestor2 = ancestor2->parent;
         }
         ancestor1 = ancestor1->parent;
@@ -231,37 +385,35 @@ Tree_Node* findCommonAncestor (Tree_Node *node1, Tree_Node *node2)
     return NULL;
 }
 
-void compareObjects (Tree_Node *root)
+
+void Compare_Objects (Tree_Node *root)
 {
     char obj1[256] = "", obj2[256] = "";
-    printf ("Р’РІРµРґРёС‚Рµ РїРµСЂРІС‹Р№ РѕР±СЉРµРєС‚: ");
+    printf ("Введите первый объект: ");
     scanf ("%s", obj1);
-    printf ("Р’РІРµРґРёС‚Рµ РІС‚РѕСЂРѕР№ РѕР±СЉРµРєС‚: ");
+    printf ("Введите второй объект: ");
     scanf ("%s", obj2);
 
-    Tree_Node *node1 = findNode (root, obj1);
-    Tree_Node *node2 = findNode (root, obj2);
+    Tree_Node *node1 = FindNode (root, obj1);
+    Tree_Node *node2 = FindNode (root, obj2);
 
     if (node1 && node2) {
-        Tree_Node *commonAncestor = findCommonAncestor (node1, node2);
+
+        Tree_Node *commonAncestor = FindCommonAncestor (node1, node2);
         if (commonAncestor) {
-            printf ("РћР±С‰РёР№ РїСЂРёР·РЅР°Рє РґР»СЏ %s Рё %s: %s\n", obj1, obj2, commonAncestor->data);
+
+            printf ("Общий признак для %s и %s: %s\n", obj1, obj2, commonAncestor->data);
+
         } else {
-            printf("РћР±С‰РёР№ РїСЂРµРґРѕРє РЅРµ РЅР°Р№РґРµРЅ.\n");
+
+            printf ("Общий предок не найден.\n");
         }
+
     } else {
-        printf("РћРґРёРЅ РёР»Рё РѕР±Р° РѕР±СЉРµРєС‚Р° РЅРµ РЅР°Р№РґРµРЅС‹ РІ РґРµСЂРµРІРµ.\n");
+        printf ("Один или оба объекта не найдены в дереве.\n");
     }
 }
 
-void displayTree (Tree_Node *node, int level)
-{
-    if (!node) return;
-    for (int i = 0; i < level; i++) printf("  ");
-    printf ("%s\n", node->data);
-    displayTree (node->left, level + 1);
-    displayTree (node->right, level + 1);
-}
 
 void GenerateDot (Tree_Node *node, FILE *file)
 {
@@ -269,15 +421,19 @@ void GenerateDot (Tree_Node *node, FILE *file)
         return;
     }
 
-    fprintf (file, "    \"%s\" [label=\"%s\"];\n", node->data, node->data);
+    if (node->parent == NULL)
+        fprintf (file, "    \"%s\" [label=\"%s\" , fillcolor = yellow];\n", node->data, node->data);
+
+    else
+        fprintf (file, "    \"%s\" [label=\"%s\"];\n", node->data, node->data);
 
     if (node->left) {
-        fprintf (file, "    \"%s\" -> \"%s\" [label=\"Р”Р°\"];\n", node->data, node->left->data);
+        fprintf (file, "    \"%s\" -> \"%s\" [label=\"Да\" , color = green];\n", node->data, node->left->data);
         GenerateDot (node->left, file);
     }
 
     if (node->right) {
-        fprintf (file, "    \"%s\" -> \"%s\" [label=\"РќРµС‚\"];\n", node->data, node->right->data);
+        fprintf (file, "    \"%s\" -> \"%s\" [label=\"Нет\" , color = red];\n", node->data, node->right->data);
         GenerateDot (node->right, file);
     }
 }
@@ -286,35 +442,35 @@ void CreateDotFile (Tree_Node *root, const char *filename)
 {
     FILE *file = fopen (filename, "w");
     if (!file) {
-        fprintf (stderr, "РќРµ СѓРґР°Р»РѕСЃСЊ СЃРѕР·РґР°С‚СЊ С„Р°Р№Р».\n");
+        fprintf (stderr, "PARTIA NE RAZRESHILA OPEN FILE.\n");
         return;
     }
 
     fprintf (file, "digraph Tree {\n");
+    fprintf (file, "node [shape=record, style=filled, fillcolor=lightblue fontname=\"Arial\"];\n");
     GenerateDot (root, file);
     fprintf (file, "}\n");
 
     fclose (file);
 }
 
-void DisplayTreeWithGraphviz (Tree_Node *root)
+void Display_Tree_With_Graphviz (Tree_Node *root)
 {
-    const char *dotFilename = "akinator.dot";
-    const char *imageFilename = "akinator.png";
+    const char* dotFilename = "akinator.dot";
+    const char* imageFilename = "akinator.bmp";
 
     CreateDotFile (root, dotFilename);
+    system ("iconv -f CP1251 -t UTF-8 < akinator.dot > akinatoru.dot");
 
     char command[512] = "";
-    snprintf (command, sizeof(command), "dot -Tpng %s -o %s", dotFilename, imageFilename);
+    snprintf (command, sizeof (command), "dot -Tpng akinatoru.dot  -o %s", imageFilename);
     system (command);
-
-    printf("Р”РµСЂРµРІРѕ СЃРѕС…СЂР°РЅРµРЅРѕ РІ С„Р°Р№Р» %s\n", imageFilename);
 }
 
-void freeTree (Tree_Node *node)
+void Free_Tree (Tree_Node *node)
 {
     if (!node) return;
-    freeTree (node->left);
-    freeTree (node->right);
+    Free_Tree (node->left);
+    Free_Tree (node->right);
     free (node);
 }
