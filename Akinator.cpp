@@ -1,12 +1,23 @@
 #include "Akinator.h"
 
+//    left    right
+//  ^       ^       ^
+//  |       |       |
+// pre     in      post
 
 
-
-
-int main ()
+int main (int argc , char* argv[])
 {
-    const char* filename = "akinator.txt";
+    const char* filename = "";
+    if (argc == 2)
+
+        filename = argv[1];
+
+    else {
+
+        printf ("Введите имя файла откуда надо считать данные");
+        return -1;
+    }
 
     FILE *file = fopen (filename, "r");
     if (!file)
@@ -21,7 +32,7 @@ int main ()
     int choice = 0;
     while (1)
     {
-        printf ("Выберите действие:\n");
+        printf ("\nВыберите действие:\n");
         printf ("1) Отгадать\n");
         printf ("2) Сравнить объекты\n");
         printf ("3) Показать дерево\n");
@@ -93,16 +104,19 @@ Tree_Node* Build_Tree (FILE* file, Tree_Node* parent)
         return NULL;
     }
 
-    char buffer[256] = "";
-    if (!Read_Data (file, buffer, sizeof (buffer))) {
-        return NULL;
-    }
+// create node (buffer, ...)
+// read data fill this buffer
 
+    char buffer[256] = "";
     Tree_Node* node = Create_Node (buffer, parent);
 
     node->left = Build_Tree (file, node);
 
     node->right = Build_Tree (file, node);
+
+    if (!Read_Data (file, node->data, sizeof (buffer))) {
+        return NULL;
+    }
 
     Skip_Spaces (file);
     fgetc (file);
@@ -111,14 +125,14 @@ Tree_Node* Build_Tree (FILE* file, Tree_Node* parent)
 }
 
 
-Tree_Node* Create_Node (const char* data, Tree_Node* parent)
+Tree_Node* Create_Node (const char* data , Tree_Node* parent)
 {
     Tree_Node* node = (Tree_Node*) calloc (1, sizeof (Tree_Node));
-    if (node) {
+    my_assert (node == NULL);
 
-        strncpy (node->data, data, sizeof (node->data) - 1);
-        node->parent = parent;
-    }
+    strncpy (node->data, data, sizeof (node->data) - 1);
+    node->parent = parent;
+
     return node;
 }
 
@@ -200,7 +214,7 @@ void Play_Akinator (Tree_Node *node)
         scanf (" %[^\n]", question);
 
         Tree_Node* newNode = (Tree_Node*) calloc (1, sizeof (Tree_Node));
-        strcpy (newNode->data, newObject);
+        strcpy (newNode->data, newObject); // crate node
 
         Tree_Node* oldNode = node;
 
@@ -210,7 +224,6 @@ void Play_Akinator (Tree_Node *node)
         questionNode->left = newNode;
         questionNode->right = oldNode;
         newNode->parent = oldNode;
-
 
         questionNode->parent = node->parent;
         if (node->parent) {
@@ -223,7 +236,7 @@ void Play_Akinator (Tree_Node *node)
                 node->parent->right = questionNode;
             }
         }
-
+// Dprintf DEBUGpintf ...
         printf ("&parent = %p , &data = %p , data = %s" , newNode->parent , &newNode->data , newNode->data);
 
         node = questionNode;
@@ -259,7 +272,7 @@ Tree_Node* Find_Node (Tree_Node* node, const char* name)
     return Find_Node (node->right, name);
 }
 
-
+// onegin
 void Remove_New_line (char* str)
 {
     char* newline = strchr (str, '\n');
@@ -346,75 +359,105 @@ Tree_Node* Find_Common_Ancestor (Tree_Node *node1, Tree_Node *node2)
 void Compare_Objects (Tree_Node* root)
 {
     char obj1[256] = "", obj2[256] = "";
-    printf ("Введите первый объект: ");
-    scanf ("%s", obj1);
-    printf ("Введите второй объект: ");
-    scanf ("%s", obj2);
+    printf("Введите первый объект: ");
+    scanf("%s", obj1);
+    printf("Введите второй объект: ");
+    scanf("%s", obj2);
 
-    Tree_Node *node1 = Find_Node (root, obj1);
-    Tree_Node *node2 = Find_Node (root, obj2);
+    Tree_Node *node1 = Find_Node(root, obj1);
+    Tree_Node *node2 = Find_Node(root, obj2);
 
     if (!node1 || !node2) {
-        printf ("Один или оба объекта не найдены в дереве.\n");
+        printf("Один или оба объекта не найдены в дереве.\n");
         return;
     }
 
-    Tree_Node *commonAncestor = Find_Common_Ancestor (node1, node2);
+    Tree_Node *commonAncestor = Find_Common_Ancestor(node1, node2);
     if (!commonAncestor) {
-        printf ("Общий родитель не найден.\n");
+        printf("Общий предок не найден.\n");
         return;
     }
 
-    printf ("Общий родитель: %s\n", commonAncestor->data);
 
-    Tree_Node *path1[256] = {};
-    Tree_Node *path2[256] = {};
+    Tree_Node* pathToAncestor[256] = {};
+    int pathAncestorSize = 0;
+
+    Tree_Node* current = root;
+    while (current && current != commonAncestor) {
+
+        pathToAncestor[pathAncestorSize++] = current;
+
+        if (Find_Node(current->left, commonAncestor->data)) {
+            current = current->left;
+        } else {
+            current = current->right;
+        }
+    }
+
+
+    printf("Общие характеристики: ");
+    for (int i = 0; i < pathAncestorSize; i++) {
+
+        Remove_New_line(pathToAncestor[i]->data);
+        printf("%s", pathToAncestor[i]->data);
+        if (i < pathAncestorSize - 1) {
+            printf(" , ");
+        }
+    }
+    printf("\n");
+
+    Tree_Node* path1[256] = {};
+    Tree_Node* path2[256] = {};
     int path1Size = 0, path2Size = 0;
 
     Tree_Node* current1 = node1;
-    while (current1 && current1 != commonAncestor) {
+    while (current1 != commonAncestor) {
 
         path1[path1Size++] = current1;
         current1 = current1->parent;
     }
+    path1[path1Size++] = commonAncestor;
+
 
     Tree_Node* current2 = node2;
-    while (current2 && current2 != commonAncestor) {
-
+    while (current2 != commonAncestor) {
         path2[path2Size++] = current2;
         current2 = current2->parent;
     }
+    path2[path2Size++] = commonAncestor;
 
-    printf ("Но %s: ", obj1);
+    printf("%s: ", obj1);
     for (int i = path1Size - 1; i > 0; i--) {
+        Remove_New_line(path1[i]->data);
 
-        Remove_New_line (path1[i]->data);
-        if (path1[i]->right == path1[i - 1]) {
-            printf("не ");
-        }
-        printf ("%s", path1[i]->data);
+
+        if (path1[i - 1] == path1[i]->right) {
+
+                printf ("не ");
+            }
+
+        printf("%s", path1[i]->data);
         if (i > 1) {
-            printf (" -> ");
+            printf(" , ");
         }
     }
+    printf("\n");
 
-    printf ("\n");
-
-    printf ("А %s: ", obj2);
+    printf("А %s: ", obj2);
     for (int i = path2Size - 1; i > 0; i--) {
+        Remove_New_line(path2[i]->data);
 
-        Remove_New_line (path2[i]->data);
+        if (path2[i - 1] == path2[i]->right) {
 
-        if (path2[i]->right == path2[i - 1]) {
-            printf ("не ");
-        }
+                printf ("не ");
+            }
 
-        printf ("%s", path2[i]->data);
+        printf("%s", path2[i]->data);
         if (i > 1) {
-            printf (" -> ");
+            printf(" , ");
         }
     }
-    printf ("\n");
+    printf("\n");
 }
 
 
@@ -427,14 +470,13 @@ void Save_Tree_To_File (Tree_Node *node, FILE *file)
 
     fprintf (file, "{");
 
-    fprintf (file, "%s", node->data);
 
     if (node->left || node->right) {
 
         Save_Tree_To_File (node->left, file);
         Save_Tree_To_File (node->right, file);
     }
-
+    fprintf (file, "%s", node->data);
     fprintf (file, "}");
 }
 
@@ -480,7 +522,7 @@ void Create_Dot_File (Tree_Node *root, const char *filename)
     if (!file) {
         fprintf (stderr, "PARTIA NE RAZRESHILA OPEN FILE.\n");
         return;
-    }
+    };
 
     fprintf (file, "digraph Tree {\n");
     fprintf (file, "node [shape=record, style=filled, fillcolor=lightblue fontname=\"Arial\"];\n");
